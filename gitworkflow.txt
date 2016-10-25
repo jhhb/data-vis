@@ -1,0 +1,31 @@
+Hello,
+
+The basic workflow for git is as follows:
+
+---Cloning a new Repo---
+
+1. create a directory on your computer called 'newDir'
+2. cd into newDir
+3. type 'git init' in newDir to initialize it as a git repository
+4. type 'git clone' followed by the url to the repository
+
+After this step, you will have the repository local
+
+---Using the repository---
+
+1. Before you make any changes to the repository, make sure to type 'git pull' to ensure that your repo is up
+to date with your partner's
+
+2. Assuming your repo is up to date, make any changes you want, including editing, deleting, or adding files
+
+3. Once you are done, type 'git add --all'
+4. type 'git commit -m "some log message for the commit goes here" ' to commit your changes
+5. Type 'git push' to push to the master repository
+
+6. Repeat 1-5 for the entire workflow. 
+
+
+--- ---
+
+Note: It is only fine for us to work this way because we are not editing the same files; otherwise branches would be
+more important or necessary
