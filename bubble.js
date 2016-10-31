@@ -18,9 +18,7 @@ var n = 3, // number of layers
 
 
     yGroupMax = d3.max(layers, function(layer) { return d3.max(layer, function(d) { return d.y; }); }),
-    yStackMax = d3.max(layers, function(layer) { return d3.max(layer, function(d) { 
-      console.log(d);
-      return d.y0 + d.y; }); });
+    yStackMax = d3.max(layers, function(layer) { return d3.max(layer, function(d) { console.log(d); return d.y0 + d.y; }); });
 
     console.log(yStackMax);
 
@@ -83,7 +81,7 @@ svg.append("g")
     .call(xAxis);
 
 //added y axis
-svg.append("g")
+var yAxisOnPage = svg.append("g")
     .attr("class", "y axis")
     .attr("transform", "translate(" + 25 + ",0)")
     .call(yAxis)
@@ -101,11 +99,11 @@ function change() {
 function transitionGrouped() {
   y.domain([0, yGroupMax]);
 
-console.log("ddd");
-
-  //need axis to reflect proportions
 
 
+console.log(yGroupMax);
+
+  yAxisOnPage.call(yAxis);
 
   rect.transition()
       .duration(500)
@@ -122,6 +120,10 @@ function transitionStacked() {
 console.log("SSS");
 
   y.domain([0, yStackMax]);
+
+  yAxisOnPage.call(yAxis);
+
+
   rect.transition()
       .duration(500)
       .delay(function(d, i) { return i * 10; })
@@ -177,8 +179,8 @@ function setPercentOfTotal(){
 
 
   for(var m = 0; m <3; m++){
-    layers[m][0].percentOfTotal = parseFloat(layers[m][0].y) / (layers[0][0].y + layers[1][0].y + layers[2][0].y);
-    layers[m][1].percentOfTotal = parseFloat(layers[m][1].y) / (layers[0][1].y + layers[1][1].y + layers[2][1].y);
+    layers[m][0].percentOfTotal = Math.round(parseFloat(layers[m][0].y) / (layers[0][0].y + layers[1][0].y + layers[2][0].y) * 349);
+    layers[m][1].percentOfTotal = layers[m][1].y;
   }
 
   console.log(layers);
