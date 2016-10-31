@@ -15,16 +15,16 @@ var n = 3, // number of layers
 
     setPercentOfTotal();
 
-        setY0();
+    setY0();
 
 
 
     yGroupMax = d3.max(layers, function(layer) { return d3.max(layer, function(d) { return d.y; }); }),
     yStackMax = 100;//d3.max(layers, function(layer) { return d3.max(layer, function(d) { console.log(d); return d.y0 + d.y; }); });
 
-    console.log(yStackMax);
+   // console.log(yStackMax);
 
-var margin = {top: 40, right: 10, bottom: 20, left: 10},
+var margin = {top: 40, right: 10, bottom: 20, left: 50},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
@@ -47,6 +47,15 @@ var xAxis = d3.svg.axis()
     .scale(x)
     .tickSize(0)
     .tickPadding(6)
+    .tickFormat(function(d){
+      console.log(d);
+      if(d == 1){
+        return "Gabriel Pereira School (n= 349)";
+      }
+      else{
+        return "Mousino da Silveira (n=46)";
+      }
+    })
     .orient("bottom");
 
 var svg = d3.select("body").append("svg")
@@ -82,6 +91,16 @@ svg.append("g")
     .attr("transform", "translate(0," + height + ")")
     .call(xAxis);
 
+//http://www.d3noob.org/2012/12/adding-axis-labels-to-d3js-graph.html
+svg.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 0 - margin.left)
+    .attr("x", 0 - (height / 2))
+    .attr("dy", "1em")
+    .style("text-anchor", "middle")
+    .text("Percent of Students");
+
+
 //added y axis
 var yAxisOnPage = svg.append("g")
     .attr("class", "y axis")
@@ -103,7 +122,7 @@ function transitionGrouped() {
 
 
 
-console.log(yGroupMax);
+//console.log(yGroupMax);
 
   yAxisOnPage.call(yAxis);
 
@@ -119,7 +138,7 @@ console.log(yGroupMax);
 
 function transitionStacked() {
 
-console.log("SSS");
+//console.log("SSS");
 
   y.domain([0, yStackMax]);
 
@@ -181,7 +200,7 @@ function setY0(){
 }
 
 function setPercentOfTotal(){
-  console.log(layers[0][0].y);
+  //console.log(layers[0][0].y);
 
 
   for(var m = 0; m <3; m++){
@@ -189,7 +208,7 @@ function setPercentOfTotal(){
     layers[m][1].percentOfTotal = layers[m][1].y / 3.49;
   }
 
-  console.log(layers);
+  //console.log(layers);
 }
 
 
