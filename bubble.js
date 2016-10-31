@@ -9,16 +9,18 @@ var n = 3, // number of layers
 
     for(var outer = 0; outer<3; outer++){
       for(var inner = 0; inner < 2; inner++){
-        layers[outer][inner] = {x: inner, y: frequencyData[outer *2 + inner], y0: 0, percentOfTotal: 0};
+        layers[outer][inner] = {x: inner, y: frequencyData[outer *2 + inner], y0: 0, percentOfTotal: 0, dy0: 0};
       }
     }
 
-    setY0();
     setPercentOfTotal();
+
+        setY0();
+
 
 
     yGroupMax = d3.max(layers, function(layer) { return d3.max(layer, function(d) { return d.y; }); }),
-    yStackMax = d3.max(layers, function(layer) { return d3.max(layer, function(d) { console.log(d); return d.y0 + d.y; }); });
+    yStackMax = 100;//d3.max(layers, function(layer) { return d3.max(layer, function(d) { console.log(d); return d.y0 + d.y; }); });
 
     console.log(yStackMax);
 
@@ -72,8 +74,8 @@ var rect = layer.selectAll("rect")
 
 rect.transition()
     .delay(function(d, i) { return i * 10; })
-    .attr("y", function(d) { return y(d.y0 + d.y); })
-    .attr("height", function(d) { return y(d.y0) - y(d.y0 + d.y); });
+    .attr("y", function(d) { return y(d.dy0 + d.percentOfTotal); })
+    .attr("height", function(d) { return y(d.dy0) - y(d.dy0 + d.percentOfTotal); });
 
 svg.append("g")
     .attr("class", "x axis")
@@ -127,8 +129,8 @@ console.log("SSS");
   rect.transition()
       .duration(500)
       .delay(function(d, i) { return i * 10; })
-      .attr("y", function(d) { return y(d.y0 + d.y); })
-      .attr("height", function(d) { return y(d.y0) - y(d.y0 + d.y); })
+      .attr("y", function(d) { return y(d.dy0 + d.percentOfTotal); })
+      .attr("height", function(d) { return y(d.dy0) - y(d.dy0 + d.percentOfTotal); })
     .transition()
       .attr("x", function(d) { return x(d.x); })
       .attr("width", x.rangeBand());
@@ -158,18 +160,22 @@ function setY0(){
   for(var m = 0; m <3; m++){
     if(m==0){
       layers[m][0].y0 = 0;
+      layers[m][0].dy0 = 0;
     }
     else{
       layers[m][0].y0 = layers[m-1][0].y + layers[m-1][0].y0;
+      layers[m][0].dy0 = layers[m-1][0].percentOfTotal + layers[m-1][0].dy0;
     }
   }
 
   for(var m = 0; m <3; m++){
     if(m==0){
       layers[m][1].y0 = 0;
+      layers[m][1].dy0 = 0;
     }
     else{
       layers[m][1].y0 = layers[m-1][1].y + layers[m-1][1].y0;
+      layers[m][1].dy0 = layers[m-1][1].percentOfTotal + layers[m-1][1].dy0;
     }
   }
 }
@@ -179,8 +185,8 @@ function setPercentOfTotal(){
 
 
   for(var m = 0; m <3; m++){
-    layers[m][0].percentOfTotal = Math.round(parseFloat(layers[m][0].y) / (layers[0][0].y + layers[1][0].y + layers[2][0].y) * 349);
-    layers[m][1].percentOfTotal = layers[m][1].y;
+    layers[m][0].percentOfTotal = Math.round(parseFloat(layers[m][0].y) / (layers[0][0].y + layers[1][0].y + layers[2][0].y) * 349) / 3.49;
+    layers[m][1].percentOfTotal = layers[m][1].y / 3.49;
   }
 
   console.log(layers);
