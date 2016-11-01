@@ -1,8 +1,10 @@
 /* property of James Boyle and David Reichert */
 
 //defined variables
-var UNKSTR = "Un";
-var UNKNUM = Number.MIN_VALUE;
+var UNKSTR = 0;
+var UNKNUM = 0;
+
+/* CLASS FUNCTIONS */
 
 //function for making a "student" object with no data
 function EmptyStudent() {
@@ -89,53 +91,22 @@ function yesNo(input) {
     } 
 
     //otherwise returns 0
-
     else {
 	return 0;
     }
 }
 
 
-//transforms data into an array of student objects
-//useful as it converts unneccessary strings
-function formatData(data) {
-    //runs through all the data and converts it to an array of students
-    var students = [];
-    for(var i = 0; i < data.length; i++) {
-	console.log(i);
-	students[i] = new Student(data[i]);
-    }
-
-    return students;
-}
-
-//The "csv" files are actually deliminated by semicolons
-//so we have to change what to computer splits by
-var scsv = d3.dsv(";", "test/plain");
-
-//this reads the information in
-scsv("./student/student-mat.csv", function(data) {
-    //functions can be called to visualize data
-    //printData(data);
-
-    //converts data into an array of students
-    console.log("HELLO");
-    var students = formatData(data);
-
-    //makes a double axis bar graph with the data
-    makeGraph(students);
-
-});
-
-//prints the data from csv file
-function printData(mathData) {
-    for(var i = 0; i < mathData.length; i++) {
-	console.log(mathData[i]);
-    }
-}
+/* GRAPH MAKING FUNCTIONS */
 
 //make the graph
-function makeGraph(data) {
+function makeGraph(data, info) {
+    //title of the graph
+    var title = "Min. Absences & Min. Final Grade by Age"
+
+    //padding for visual purposes
+    var pad = 15;
+
     //specs of svg and graph
     var w = 800;
     var h = 600;
@@ -144,7 +115,7 @@ function makeGraph(data) {
     var graphTop = 80;
     var graphBottom = 400 + graphTop;
     var graphLeft = 100;
-    var graphRight = 400 + graphLeft;
+    var graphRight = 500 + graphLeft;
 
     //makes a graph object
     var graph = {
@@ -160,8 +131,15 @@ function makeGraph(data) {
         right: graphRight
     };
 
-    dualBarGraph(graph);
+    //makes dual bar graph for the average absences and grades
+    avgAbsenceAndGrade(graph,title,pad,info);
+
+    //returns the graph for editting
+    return graph;
 }
+
+/* LABEL MAKING FUNCTIONS */
+
 
 //labels the x axis with given label
 function labelX(graph, xAxis, label) {
@@ -220,78 +198,223 @@ function addTitle(graph, title) {
 	.text(title);
 }
 
-//dual bar graph
-function dualBarGraph(graph) {
-    //adds title to the graph
-    addTitle(graph, "Avg. Absences & Avg. Final Grade by Age");
+/* AXIS MAKING FUNCTIONS */
 
-    //padding for visuals
-    var pad = 15;
 
+//makes right and left y axes scales
+function yAxes(graph, lowBound1, upBound1, lowBound2, upBound2) {
+
+    //makes y scales
+    var y0 = d3.scale.linear().domain([lowBound1, upBound1]).range([graph.bottom - graph.top, 0]);
+    var y1 = d3.scale.linear().domain([lowBound2, upBound2]).range([graph.bottom - graph.top, 0]);
+
+    //makes object with all the information for y axes and scales
+    var yInfo = {
+	//records scales for y axes
+	leftScale: y0,
+	rightScale: y1,
+
+	//makes right and left axes
+	left: d3.svg.axis().scale(y0).ticks(5).orient("left"),
+	right: d3.svg.axis().scale(y1).ticks(5).orient("right")
+    }
+
+    //returns information of y axes
+    return yInfo;
+}
+
+//makes object with scale and axis for x as age
+function xAge(graph, pad) {
     //makes age scale
     var age = d3.scale.ordinal()
-	.rangeRoundBands([graph.left + pad, graph.right - pad], 0.1);
+        .rangeRoundBands([graph.left + pad, graph.right - pad], 0.1);
 
     //sorts array of ages to get labels
     age.domain(graph.data.map(function(d) {return d.age;}).sort());
 
-    //makes y scales for 
-    var y0 = d3.scale.linear().domain([0, 20]).range([graph.bottom - graph.top, 0]);
-    var y1 = d3.scale.linear().domain([0, 100]).range([graph.bottom - graph.top, 0]);
-
     //makes x axis
     var xAxis = d3.svg.axis()
-	.scale(age)
-	.orient("bottom");
+        .scale(age)
+        .orient("bottom");
 
-    //create left yAxis
-    var yAxisLeft = d3.svg.axis().scale(y0).ticks(5).orient("left");
+    //creates object with the information
+    var xInfo = {
+	scale: age,
+	axis: xAxis
+    };
 
-    //create right yAxis
-    var yAxisRight = d3.svg.axis().scale(y1).ticks(5).orient("right");
+    return xInfo;
+}
 
- 
+/* GRAPH MAKING FUNCTIONS */
+
+//dual bar graph for average absences and grades
+function avgAbsenceAndGrade(graph, title, pad, GAinfo) {
+    //adds title to the graph
+    addTitle(graph, title);
+
+    //gets x axis information (scale and axis for the bottom
+    var xInfo = xAge(graph, pad);
+
+    //gets y axis information (scales and axes for right and left)
+    var yInfo = yAxes(graph, 0, 20, 0, 100); 
+
     //labels the axes
-    labelX(graph, xAxis, "Age");
-    labelLeftY(graph, yAxisLeft, "Final Grade");
-    labelRightY(graph, yAxisRight, "Absences");
+    labelX(graph, xInfo.axis, "Age");
+    labelLeftY(graph, yInfo.left, "Final Grade");
+    labelRightY(graph, yInfo.right, "Absences");
 
-    //gets grades and absences
-    var gradesAbsences = gradesAndAbsences(graph.data);
 
-    bars = graph.svg.selectAll(".bar").data(gradesAbsences).enter();
+    bars = graph.svg.selectAll(".bar").data(GAinfo.gradeAbsence).enter();
 
+    //graphs final grade on left, absences on right
+    leftG3(graph, xInfo, yInfo, bars);
+    //leftAllGrade(graph, xInfo, yInfo, bars);
+    rightAbsence(graph, xInfo, yInfo, bars);
+}
+
+function maxAbsenceAndGrade(graph, title, pad, GAinfo) {
+    //adds title to the graph
+    addTitle(graph, title);
+
+    //gets x axis information (scale and axis for the bottom
+    var xInfo = xAge(graph, pad);
+
+    //gets y axis information (scales and axes for right and left)
+    var yInfo = yAxes(graph, 0, 20, 0, 100);
+
+    //labels the axes
+    labelX(graph, xInfo.axis, "Age");
+    labelLeftY(graph, yInfo.left, "Final Grade");
+    labelRightY(graph, yInfo.right, "Absences");
+
+
+    bars = graph.svg.selectAll(".bar").data(GAinfo.max).enter();
+
+    //graphs final grade on left, absences on right
+    leftG3(graph, xInfo, yInfo, bars);
+    //leftAllGrade(graph, xInfo, yInfo, bars);
+    rightAbsence(graph, xInfo, yInfo, bars);
+}
+
+
+/* BAR DRAWING FUNCTIONS */
+    
+function leftAllGrade(graph, xInfo, yInfo, bars) {
+    bars.append("rect")
+        .attr("class", "bar11")
+        .attr("fill", "green")
+        .attr("x", function(d) {
+            return xInfo.scale(d.age);
+        })
+        .attr("width", xInfo.scale.rangeBand()/6)
+        .attr("y", function(d) {
+            return graph.bottom - yInfo.leftScale(d.G1);
+        })
+        .attr("height", function(d,i,j) {
+            return yInfo.leftScale(d.G1);
+        });
+
+    bars.append("rect")
+        .attr("class", "bar12")
+        .attr("fill", "purple")
+        .attr("x", function(d) {
+            return xInfo.scale(d.age) + xInfo.scale.rangeBand()/6;
+        })
+        .attr("width", xInfo.scale.rangeBand()/6)
+        .attr("y", function(d) {
+            return graph.bottom - yInfo.leftScale(d.G2);
+        })
+        .attr("height", function(d,i,j) {
+            return yInfo.leftScale(d.G2);
+        });
+
+    bars.append("rect")
+        .attr("class", "bar13")
+        .attr("fill", "blue")
+        .attr("x", function(d) {
+            return xInfo.scale(d.age) + xInfo.scale.rangeBand()/3;
+        })
+        .attr("width", xInfo.scale.rangeBand()/6)
+        .attr("y", function(d) {
+            return graph.bottom - yInfo.leftScale(d.G3);
+        })
+        .attr("height", function(d,i,j) {
+            return yInfo.leftScale(d.G3);
+        });
+}
+
+//graphs the final grade on the left axis
+function leftG3(graph, xInfo, yInfo, bars) {
     bars.append("rect")
 	.attr("class", "bar1")
 	.attr("fill", "blue")
 	.attr("x", function(d) { 
-	    return age(d.age); 
+	    return xInfo.scale(d.age); 
 	})
-	.attr("width", age.rangeBand()/2)
+	.attr("width", xInfo.scale.rangeBand()/2)
 	.attr("y", function(d) {
-	    return graph.bottom - y0(d.G3); 
+	    return yInfo.leftScale(d.G3) + graph.top; 
 	})
-	.attr("height", function(d,i,j) { 
-	    return y0(d.G3); 
-	}); 
+	.attr("height", function(d,i,j) {
+	    return graph.bottom - yInfo.leftScale(d.G3) - graph.top; 
+	})
+	.on("mouseover", function(d, i) {
+	    //get the x and y of the bar
+	    var x = parseFloat(d3.select(this).attr("x"));
+	    var y = parseFloat(d3.select(this).attr("y"));
 
+            //Create the tooltip label
+            graph.svg.append("text")
+                .attr("id", "tooltip")
+                .attr("x", x + 5)
+                .attr("y", y - 5)
+                .attr("fill", "black")
+                .text(d.G3);
+
+        })
+        .on("mouseout", function() {
+            d3.select("#tooltip").remove();
+        });
+
+}
+
+//graphs average amount of absences on the right axis
+function rightAbsence(graph, xInfo, yInfo, bars) {
     bars.append("rect")
 	.attr("class", "bar2")
 	.attr("fill", "red")
 	.attr("x", function(d) { 
-	    return age(d.age) + age.rangeBand()/2; 
+	    return xInfo.scale(d.age) + xInfo.scale.rangeBand()/2; 
 	})
-	.attr("width", age.rangeBand() / 2)
-	.attr("y", function(d) { 
-	    return graph.bottom - y1(d.absences); 
+	.attr("width", xInfo.scale.rangeBand() / 2)
+	.attr("y", function(d) {
+	    return yInfo.rightScale(d.absences) + graph.top; 
 	})
-	.attr("height", function(d,i,j) { 
-	    return y1(d.absences); 
-	}); 
+	.attr("height", function(d,i,j) {
+	    return graph.bottom - yInfo.rightScale(d.absences) - graph.top; 
+	})
+	.on("mouseover", function(d, i) {
+            //get the x and y of the bar
+            var x = parseFloat(d3.select(this).attr("x"));
+            var y = parseFloat(d3.select(this).attr("y"));
 
+            //Create the tooltip label
+            graph.svg.append("text")
+                .attr("id", "tooltip")
+                .attr("x", x + 5)
+                .attr("y", y - 5)
+                .attr("fill", "black")
+                .text(d.absences);
+
+        })
+        .on("mouseout", function() {
+            d3.select("#tooltip").remove();
+        });
 }
 
 //records number of students with parents who are apart and together
+//currently unused
 function countParentStatus(data) {
     //storage for numbers. Index 0 is apart, 1 is together
     var p = [0, 0];
@@ -309,52 +432,173 @@ function countParentStatus(data) {
     return p;
 }
 
+/* DATA PARSING FUNCTIONS */
+
+
 //records final grades and absences for ages 15 through 22, then averages them
 function gradesAndAbsences(data) {
     //counts number of students in age group
     var ageGroupSize = [];
     
-    //records absenses and grades for each student
-    var gradeAbsence = [];
+    //Information for grades and absences
+    var GAinfo = {
+	//holds average for grades and absences
+	gradeAbsence: [],
 
-    //zeroes data
+	//holds min and max for grades and absences
+	min: [], 
+	max: [],
+
+	//counts students above avg in each category
+	aboveGAvgStu: [],
+	belowGAvgStu: [],
+	aboveAAvgStu: [],
+	belowAAvgStu: [],
+
+	//counts total students
+	totalStu: 0
+    }
+	
+
+    //initializes data
     var ageGroups = 22 - 15; //number of age groups
     for(var i = 0; i <= ageGroups; i++) {
 	ageGroupSize[i] = 0;
-	gradeAbsence[i] = new EmptyStudent();
-	gradeAbsence[i].absences = 0;
-	gradeAbsence[i].G1 = 0;
-	gradeAbsence[i].G2 = 0;
-	gradeAbsence[i].G3 = 0;
+	GAinfo.gradeAbsence[i] = new EmptyStudent();
+	GAinfo.min[i] = new EmptyStudent();
+	GAinfo.max[i] = new EmptyStudent();
+	GAinfo.aboveGAvgStu[i] = {age: 0, number: 0};
+	GAinfo.belowGAvgStu[i] = {age: 0, number: 0};
+	GAinfo.aboveAAvgStu[i] = {age: 0, number: 0};
+	GAinfo.belowAAvgStu[i] = {age: 0, number: 0};
     }
     
     //runs through all the data, recording relevant info
     var baseAge = 15;
+    GAinfo.totalStu = data.length;
     var currIndex;
-    for(var i = 0; i < data.length; i++) {
+    for(var i = 0; i < GAinfo.totalStu; i++) {
 	currIndex = data[i].age - baseAge;
 	ageGroupSize[currIndex]++;
-	gradeAbsence[currIndex].absences = data[i].absences + gradeAbsence[currIndex].absences;
-	gradeAbsence[currIndex].G1 = data[i].absences + gradeAbsence[currIndex].G1;	
-	gradeAbsence[currIndex].G2 = data[i].absences + gradeAbsence[currIndex].G2;
-	gradeAbsence[currIndex].G3 = data[i].absences + gradeAbsence[currIndex].G3;
-	gradeAbsence[currIndex].age = data[i].age;
+
+	//totals for grades and absences
+	GAinfo.gradeAbsence[currIndex].absences = data[i].absences + GAinfo.gradeAbsence[currIndex].absences;
+	GAinfo.gradeAbsence[currIndex].G1 = data[i].G1 + GAinfo.gradeAbsence[currIndex].G1;	
+	GAinfo.gradeAbsence[currIndex].G2 = data[i].G2 + GAinfo.gradeAbsence[currIndex].G2;
+	GAinfo.gradeAbsence[currIndex].G3 = data[i].G3 + GAinfo.gradeAbsence[currIndex].G3;
+
+	//min and max for grades
+	GAinfo.max[currIndex].G1 = Math.max(GAinfo.max[currIndex].G1, data[i].G1);
+	GAinfo.max[currIndex].G2 = Math.max(GAinfo.max[currIndex].G2, data[i].G2);
+	GAinfo.max[currIndex].G3 = Math.max(GAinfo.max[currIndex].G3, data[i].G3);
+	GAinfo.min[currIndex].G1 = Math.min(GAinfo.min[currIndex].G1, data[i].G1);
+	GAinfo.min[currIndex].G2 = Math.min(GAinfo.min[currIndex].G2, data[i].G2);
+	GAinfo.min[currIndex].G3 = Math.min(GAinfo.min[currIndex].G3, data[i].G3);
+
+	//min and max for absences
+	GAinfo.max[currIndex].absences = Math.max(GAinfo.max[currIndex].absences, data[i].absences);
+	GAinfo.min[currIndex].absences = Math.min(GAinfo.min[currIndex].absences, data[i].absences);
+	
+	GAinfo.gradeAbsence[currIndex].age = 
+	    GAinfo.max[currIndex].age =
+	    GAinfo.min[currIndex].age = data[i].age;
+	
     }
 
     //gets average data for all of them
     for(var i = 0; i <= ageGroups; i++) {
-	//deletes object of no data for age group
-	if(gradeAbsence[i].age == UNKNUM) {
-	    gradeAbsences.splice(i, 1);
-	}
-
 	//calculates average for the age
-	gradeAbsence[i].absences = gradeAbsence[i].absences/ageGroupSize[i];
-	gradeAbsence[i].G3 = gradeAbsence[i].G3/ageGroupSize[i];
+	GAinfo.gradeAbsence[i].absences = GAinfo.gradeAbsence[i].absences/ageGroupSize[i];
+	GAinfo.gradeAbsence[i].G1 = GAinfo.gradeAbsence[i].G1/ageGroupSize[i];
+	GAinfo.gradeAbsence[i].G2 = GAinfo.gradeAbsence[i].G2/ageGroupSize[i];
+	GAinfo.gradeAbsence[i].G3 = GAinfo.gradeAbsence[i].G3/ageGroupSize[i];
 
     }
 
-    return gradeAbsence;
+    //runs through all data again and counts students above and below averages
+    for(var i = 0; i < GAinfo.totalStu; i++) {
+	currIndex = data[i].age - 15;
+	//counts grade average students
+	if (data[i].G3 < GAinfo.gradeAbsence[currIndex].G3) {
+	    GAinfo.belowGAvgStu[currIndex].age = data[currIndex].age;
+	    GAinfo.belowGAvgStu[currIndex].number++;
+	} else {
+	    GAinfo.aboveGAvgStu[currIndex].age = data[currIndex].age;
+	    GAinfo.aboveGAvgStu[currIndex].number++;
+	}
+
+	//counts absences avg students
+	if (data[i].absences < GAinfo.gradeAbsence[currIndex].absences) {
+	    GAinfo.belowAAvgStu[currIndex].age = data[currIndex].age;
+	    GAinfo.belowAAvgStu[currIndex].number++;
+	} else {
+	    GAinfo.aboveAAvgStu[currIndex].age = data[currIndex].age;
+	    GAinfo.aboveAAvgStu[currIndex].number++;
+	}
+    }	    
+
+    //returns info on grades and absences
+    return GAinfo;
 }
-	
+
+//transforms data into an array of student objects
+//useful as it converts unneccessary strings
+function formatData(data) {
+    //runs through all the data and converts it to an array of students
+    var students = [];
+    for(var i = 0; i < data.length; i++) {
+	students[i] = new Student(data[i]);
+    }
+
+    return students;
+}	
+
+//The "csv" files are actually deliminated by semicolons
+//so we have to change what to computer splits by
+var scsv = d3.dsv(";", "test/plain");
+var mathGraph, portGraph; //graphs of math and portuguese classes
+var mathGAinfo, portGAinfo; //holds info on Grades and absences
+
+//this reads the information in from the math class
+scsv("./student/student-mat.csv", function(data) {
+    //converts data into an array of students
+    var mathStudents = formatData(data);
+
+    //gets GA info from math
+    mathGAinfo = gradesAndAbsences(mathStudents);
+    console.log(mathGAinfo.min.map(function(d) {return d.absences;}));
+    console.log(mathGAinfo.max.map(function(d) {return d.absences;}));
+    console.log(mathGAinfo.gradeAbsence.map(function(d) {return d.absences;}));
+
+    //makes a double axis bar graph with the data
+    mathGraph = makeGraph(mathStudents, mathGAinfo);
+
+});
+
+//this reads the information in from the portugeuse class
+scsv("./student/student-por.csv", function(data) {
+    //converts data into an array of students
+    var portStudents = formatData(data);
+
+    //gets GA info from portugeuse
+    portGAinfo = gradesAndAbsences(portStudents);
+
+    //makes a double axis bar graph with the data
+    portGraph = makeGraph(portStudents, portGAinfo);
+
+});
+
+
+/* INTERACTIVE FUNCTIONS */
+
+function displayMinGA() {
+    //changes title
+    var title = "Max. Final Grade & Max. Absences in Age Group";
+
+    //padding for visuals
+    var pad = 15;
+
+    //changes graph to display max absence and grade
+    maxAbsenceAndGrade(mathGraph, title, pad, GAinfo);
+}
 
