@@ -163,15 +163,32 @@ function makeGraph(data) {
     dualBarGraph(graph);
 }
 
+//labels the x axis with given label
+function labelX(graph, xAxis, label) {
+    graph.svg.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + graph.bottom + ")")
+        .call(xAxis)
+	.append("text")
+	.attr("y", 6)
+	.attr("dy", "2em")
+	.attr("x", (graph.right + graph.left)/2)
+	.style("text-anchor", "middle")
+	.text(label);
+}
+    
+
 //labels left Y axis with given label
 function labelLeftY(graph, yAxisLeft, label) {
     graph.svg.append("g")
 	.attr("class", "y axis axisLeft")
 	.attr("transform", "translate(" + graph.left + "," + graph.top + ")")
+	.attr("fill", "blue")
 	.call(yAxisLeft)
 	.append("text")
 	.attr("y", 6)
 	.attr("dy", "-2em")
+	.attr("dx", "2em")
 	.style("text-anchor", "end")
 	.text(label);
 }
@@ -181,6 +198,7 @@ function labelRightY(graph, yAxisRight, label) {
     graph.svg.append("g")
 	.attr("class", "y axis axisRight")
 	.attr("transform", "translate(" + graph.right + "," + graph.top + ")")
+	.attr("fill", "red")
 	.call(yAxisRight)
 	.append("text")
 	.attr("y", 6)
@@ -190,8 +208,23 @@ function labelRightY(graph, yAxisRight, label) {
 	.text(label);
 }
 
+//adds title to a graph
+function addTitle(graph, title) {
+    graph.svg.append("g")
+	.attr("class", "title")
+	.attr("transform", "translate(" + (graph.right + graph.left)/2 + ",0)")
+        .append("text")
+        .attr("y", 6)
+        .attr("dy", "1em")
+        .style("text-anchor", "middle")
+	.text(title);
+}
+
 //dual bar graph
 function dualBarGraph(graph) {
+    //adds title to the graph
+    addTitle(graph, "Avg. Absences & Avg. Final Grade by Age");
+
     //padding for visuals
     var pad = 15;
 
@@ -217,11 +250,9 @@ function dualBarGraph(graph) {
     //create right yAxis
     var yAxisRight = d3.svg.axis().scale(y1).ticks(5).orient("right");
 
-    graph.svg.append("g")
-	.attr("class", "x axis")
-	.attr("transform", "translate(0," + graph.bottom + ")")
-	.call(xAxis);
-
+ 
+    //labels the axes
+    labelX(graph, xAxis, "Age");
     labelLeftY(graph, yAxisLeft, "Final Grade");
     labelRightY(graph, yAxisRight, "Absences");
 
@@ -292,6 +323,8 @@ function gradesAndAbsences(data) {
 	ageGroupSize[i] = 0;
 	gradeAbsence[i] = new EmptyStudent();
 	gradeAbsence[i].absences = 0;
+	gradeAbsence[i].G1 = 0;
+	gradeAbsence[i].G2 = 0;
 	gradeAbsence[i].G3 = 0;
     }
     
@@ -302,6 +335,8 @@ function gradesAndAbsences(data) {
 	currIndex = data[i].age - baseAge;
 	ageGroupSize[currIndex]++;
 	gradeAbsence[currIndex].absences = data[i].absences + gradeAbsence[currIndex].absences;
+	gradeAbsence[currIndex].G1 = data[i].absences + gradeAbsence[currIndex].G1;	
+	gradeAbsence[currIndex].G2 = data[i].absences + gradeAbsence[currIndex].G2;
 	gradeAbsence[currIndex].G3 = data[i].absences + gradeAbsence[currIndex].G3;
 	gradeAbsence[currIndex].age = data[i].age;
     }
