@@ -24,7 +24,7 @@ var n = 3, // number of layers
 
    // console.log(yStackMax);
 
-var margin = {top: 40, right: 10, bottom: 20, left: 50},
+var margin = {top: 40, right: 10, bottom: 60, left: 50},
     width = 960 - margin.left - margin.right,
     height = 500 - margin.top - margin.bottom;
 
@@ -79,6 +79,41 @@ var rect = layer.selectAll("rect")
     .attr("width", x.rangeBand())
     .attr("height", 0);
 
+var legend = d3.select("body").append("svg")
+  .attr("width", 300)
+  .attr("height", 500)
+  .append("g")
+  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var colors = ["#1B4F72","#6593B2", "#AED6F1"];
+var names = ["Other", "Father", "Mother"];
+
+legend.selectAll("rect")
+    .data(colors).enter()
+    .append("rect")
+    .attr("x", function (d, i){  100 })
+    .attr("y", function(d, i){ return height/3 * i })
+    .attr("width", 200)
+    .attr("height", height/3)
+    .attr("fill", function (d){ return d; });
+
+
+var text = legend.selectAll("text")
+                        .data(names)
+                        .enter()
+                        .append("text");
+
+//Add SVG Text Element Attributes
+var textLabels = text
+                 .attr("x", function(d) { return 20; })
+                 .attr("y", function(d, i) { return 50 + height/3 * i; })
+                 .text( function (d) {return d})
+                 .attr("font-family", "sans-serif")
+                 .attr("font-size", "20px")
+                 .attr("fill", "white");
+
+
+
 //problem here
 
 rect.transition()
@@ -92,13 +127,24 @@ svg.append("g")
     .call(xAxis);
 
 //http://www.d3noob.org/2012/12/adding-axis-labels-to-d3js-graph.html
-svg.append("text")
+var yAxisLabel = svg.append("text")
     .attr("transform", "rotate(-90)")
     .attr("y", 0 - margin.left)
     .attr("x", 0 - (height / 2))
     .attr("dy", "1em")
+    .attr("id", "y-axis-label")
     .style("text-anchor", "middle")
     .text("Percent of Students");
+
+svg.append("text")
+        .attr("transform", "translate(" + (width / 2) + " ," + (height + margin.bottom) + ")")
+        .style("text-anchor", "middle")
+        .text("School Name");
+svg.append("text")
+  .attr("transform", "translate(" + (width/2) + " ," + (-20) + ")")
+  .style("text-anchor", "middle")
+  .text("Primary caretaker for children at two Portugese secondary schools");
+
 
 
 //added y axis
@@ -120,6 +166,7 @@ function change() {
 function transitionGrouped() {
   y.domain([0, yGroupMax]);
 
+  yAxisLabel.text("Number of Students");
 
 
 //console.log(yGroupMax);
@@ -139,6 +186,9 @@ function transitionGrouped() {
 function transitionStacked() {
 
 //console.log("SSS");
+  yAxisLabel.text("Percent of Students");
+
+
 
   y.domain([0, yStackMax]);
 
