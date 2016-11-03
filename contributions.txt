@@ -1,0 +1,14 @@
+Contributions.txt
+
+						David		James
+Project Description, v1			50%		50%
+
+Initial brainstorming report			50%		50%
+
+Email initial proposed implementation		50%		50%
+
+Detailed project proposal			50%		50%
+
+Dual axis bar chart				100%		0%
+
+Stacked to grouped bar chart			0%		100%
