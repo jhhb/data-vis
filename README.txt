@@ -22,7 +22,24 @@ but that was done in d3.js, not CSS.
 
 David's write-up
 ---
+The shell is done, and I've put different types of data in it, but I'd like to
+add new categories other than ages. It could be interesting to see absences
+and grades among rural vs urban students, or among students with different
+levels of family relations. There are many types of categorical information in this
+set, so there are a variety of possibilities. In terms of the data itself, not
+much of it is numerical. The only way to make it numerical would be to count
+the students in each category, so most graphs would end up as number of
+students and percentage of students, which isn't particularly
+interesting. That's why I focus mostly on grades and absences.
 
+I tried to make it so most functions could be applied to many different types
+of data, which was helpful making the graph. The dual-scale bar graph is
+complete, and the scales, titles, and labels are done. 
+
+My styling is pretty awful. The colors of the bars need improvement -- red and
+blue look neon, and green and purple look a little sickly. I could be more
+descriptive labeling axes, but I'm not really sure what to add. I have not
+added anything in CSS.
 
 
 

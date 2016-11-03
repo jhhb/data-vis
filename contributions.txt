@@ -1,7 +1,7 @@
 Contributions.txt
 
 						David		James
-Project Description, v1			50%		50%
+Project Description, v1				50%		50%
 
 Initial brainstorming report			50%		50%
 
